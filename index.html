@@ -159,6 +159,11 @@ const ext = [
     // 其它
     'CaCO3+CO2+H2O=Ca(HCO3)2',
     'Na2CO3+CO2+H2O=NaHCO3',
+    // SO3 相关
+    "KOH+SO3=K2SO4+H2O",
+    "NaOH+SO3=Na2SO4+H2O",
+    "Ba(OH)2+SO3=BaSO4+H2O",
+    "Ca(OH)2+SO3=CaSO4+H2O",
 ]
 // 自动生成溶液置换的程序片段
 // 我直接打表了，反正不常改
@@ -372,8 +377,10 @@ function react(c1, a1, c2, a2){
     }
     if(!solubility(c1, a2) || !solubility(c2, a1))
         okay = true
-    // 碱+盐 与 盐+盐 的特殊判断
-    if((a1 === 'OH' || c1 === 'H') && (a2 !== 'OH' && c2 !== 'H')){    // e.g. 氢氧化铜与盐酸不考虑
+    // if(!okay)
+    //     console.log('???:', result)
+    // 反应物若无酸，需溶
+    if((c1 !== 'H' && c2 !== 'H')){
         if(!solubility(c1, a1))
             okay = false
         if(!solubility(c2, a2))
@@ -402,6 +409,13 @@ function feeder(){
             }
         }
     }
+    // 自动生成SO3反应
+    // for(let c of Object.keys(cations)){
+    //     let a = link(c, 'OH')
+    //     if(invalid.OH.has(c) || unstable(a) || !solubility(c, 'OH'))
+    //         continue
+    //     console.log(`${a}+SO3=${link(c, 'SO4')}+H2O`)
+    // }
 }
 feeder()
 
@@ -483,10 +497,14 @@ function init(inventory=INVENTORY){
                 }
             }
         }
-        trans.set(left.sort().join('+'), [...right])
+        // update 3.24 针对不同条件有不同反应
+        // solve 里要多一层循环
+        let key = left.sort().join('+')
+        if(!trans.has(key))
+            trans.set(key, [])
+        trans.get(key).push([...right])
         // for(let r of right)
         //     trans.add(`${left.sort().join('+')}=${r}`)
-        
     }
 }
 function formulaToElements(formula){
@@ -560,7 +578,7 @@ function limit_containElements(letter, elements){
     /*
     限制：未知节点名letter必定含有elements中的至少一种元素
     */
-   let possible = board.get(letter).possible
+    let possible = board.get(letter).possible
     for(let guess of possible){
         let hasSameElem = false
         for(let elem of book.get(guess).elements){
@@ -577,8 +595,8 @@ function limit_madeOf(letter, elements){
     /*
     限制：未知节点名letter必定由elements中的一种或多种元素组成
     */
-   let possible = board.get(letter).possible
-   for(let guess of possible){
+    let possible = board.get(letter).possible
+    for(let guess of possible){
         for(let elem of book.get(guess).elements){
             if(!elements.has(elem)){
                 possible.delete(guess)
@@ -603,6 +621,18 @@ function limit_elementNumber(letter, num){
     let possible = board.get(letter).possible
     for(let guess of possible){
         if(book.get(guess).elements.size !== num)
+            possible.delete(guess)
+    }
+}
+function limit_elementNumRange(letter, min, max){
+    /**
+     * 限制：元素数量范围
+     * 包含边界
+     * 可以替换上面的函数
+     */
+    let possible = board.get(letter).possible
+    for(let guess of possible){
+        if(!(book.get(guess).elements.size >= min && book.get(guess).elements.size <= max))
             possible.delete(guess)
     }
 }
@@ -773,19 +803,25 @@ function solve(){
                     okay = false
                     break
                 }
-                let expect = trans.get(s)
-                // console.log(tmp, known, tran.right)
-                // 因为trans[i]项数很少(<3)所以使用array，不使用set
-                for(let i=tran.right.length-1;i>=0;i--){
-                    if(known[tran.right[i]]){
-                        if(!expect.includes(known[tran.right[i]])){         // 妙
-                            okay = false
+                let any = false
+                for(let expect of trans.get(s)){
+                    // console.log(tmp, known, tran.right)
+                    // 因为trans[i]项数很少(<3)所以使用array，不使用set
+                    any = true
+                    for(let i=tran.right.length-1;i>=0;i--){
+                        if(known[tran.right[i]]){
+                            if(!expect.includes(known[tran.right[i]])){         // 妙
+                                any = false
+                                break
+                            }
+                        }else{
                             break
                         }
-                    }else{
-                        break
                     }
+                    if(any)
+                        break
                 }
+                okay = any
                 if(!okay)
                     break
             }
@@ -810,9 +846,76 @@ function solve(){
  * 第六部分
  * 处理输入
  */
-
+function delSpace(s){
+    return s.replace(/\s/g, '')
+}
 function input(s){
+    /**
+     * 3.23 更新
+     */
+    let result;
+    // 链式转换
+    if(s.match(/^[A-Z]([<>\=\-][A-Z])+$/i)){
+        for(let i=1;i<s.length;i+=2){
+            let a=s[i-1].toUpperCase(), b=s[i+1].toUpperCase()
+            if(s[i] == '=')
+                boardHuhuan(a, b)
+            else if(s[i] == '>')
+                boardChu(a, b)
+            else if(s[i] == '<')
+                boardChu(b, a)
+            else if(s[i] == '-')
+                boardFanying(a, b)
+            else
+                throw new Error()
+        }
+        return 0
+    }
+    if(s.match(/^[A-Z](\+[A-Z])*=[A-Z](\+[A-Z])*/i)){
+        // 转换式限制
+        let [left, right] = s.split('=').map(v => v.split('+').map(c => c.toUpperCase()))
+        limit_transform(left, right)
+        return 0
+    }
+    // 指定物质
+    if(result = s.match(/^[a-zA-Z]:(?:([A-Z]\w*)|\[([A-Z]\w*(?:,[A-Z]\w*)*)\])$/)){
+        if(result[1])
+            limit_possible(s[0].toUpperCase(), new Set([result[1]]))
+        else
+            limit_possible(s[0].toUpperCase(), new Set(result[2].split(',')))
+        return 0
+    }
+    if(result = s.match(/^\[([a-zA-Z]+)\]/)){
+        let letters = [...result[1]]
+        let part = s.slice(s.indexOf(']')+1)
+        let lim;
+        if(lim = part.match(/^\[((?:[A-Z]\w*)+)\]$/)){
+            letters.forEach(v => limit_containElements(v.toUpperCase(), formulaToElements(lim[1])))
+        }else if(lim = part.match(/^\{((?:[A-Z]\w*)+)\}$/)){
+            letters.forEach(v => limit_madeOf(v.toUpperCase(), formulaToElements(lim[1])))
+        }else if(lim = part.match(/^\(O\)$/)){
+            letters.forEach(v => limit_oxide(v.toUpperCase()))
+        }else if(lim = part.match(/^\(([0-9]+-[0-9]+)\)$/)){
+            let [a, b] = lim[1].split('-')
+            // [a, b] = [parseInt(a), parseInt(b)].sort()
+            letters.forEach(v => limit_elementNumRange(v.toUpperCase(), parseInt(a), parseInt(b)))  // 排序细节防呆
+        }else if(lim = part.match(/^\(([0-9])\)$/)){
+            letters.forEach(v => limit_elementNumber(v.toUpperCase(), parseInt(lim[1])))
+        }else{
+            return 1
+        }
+        return 0
+    }
+    if(s.length === 1){
+        createNode(s.toUpperCase())
+        return 0
+    }
+    return 1;
+}
+
+function _input(s){
     // 太丑了，迟早要用正则重写一遍
+    // 搞定了，弃用
     /**
      * 具体规则见HTML
      */
@@ -970,7 +1073,7 @@ function input(s){
 界面有点简陋，见谅
 本来是练习JS的随笔，没想到写了这么多
 需要2018年以后发布的主流浏览器运行
-代码开源(许可证见源码开头)，注释良好，可以食用
+代码开源(许可证见源码开头)
 左侧为输入框。
 
 版本: ${VERSION}
@@ -990,30 +1093,35 @@ function input(s){
 点击“下一步”以继续
 `,
         `\
-请在左侧输入题目条件，一行一个
+请在左侧输入题目条件，一行一条
 
 规则如下：
 
-一、建立转换关系
-1. a>b>c>...          A能生成B，B能生成C，...
-2. a-b-c-...          A能与B反应，B能与C反应...
-3. a=b=c=...          A与B能互相转换，B与C能互相转换
-4. "a>b"可以简写为"ab"，"a>b>c>..."简写为"abc..."
-5. a+b=c+d+e(类似格式) A+B生成C+D+E（可以省略部分生成物）
+一、建立转换关系(先写)
+1. 转换链
+将不定数量的未知字母，用"><-="四种符号连接，可以得到转换链
+"a>b"代表A可以转换为B; "a<b"反之
+"a-b"代表A与B可以发生反应
+"a=b"代表A与B可以互相转换
+转换链支持不定长度、混合符号，例："c>d-f-a<g=i"
+2. 转换式
+a+b=c+d+e(类似格式) A与B反应生成C,D和E(可以省略部分生成物!)
 
 二、添加物质条件
-1. [abc...](1)        ABC...由1种元素组成
-2. [abc...](O)        ABC...为氧化物
+0. [abc...](1)        ABC...每个都由1种元素组成(数量可自定义)
+1. [abc...](2-10)     ABC...每个物质的元素数量范围是2~10(包含)
+2. [abc...](O)        ABC...为氧化物(固定搭配)
 3. [abc...]{FeO...}   组成ABC...的所有元素在Fe,O...这个范围内
 4. [abc...][FeCuAg...]   含有Fe,Cu,Ag...中至少一种元素
 5. a:H2O              A为H2O
 6. a:[CO2,H2O,...]    A为其中之一
 
 三、注意事项！
-1. 转换关系写在物质条件前面！重要！
-2. 表示未知物的字母，不分大小写
+1. 转换关系写在物质条件前面！
+2. 表示未知物的字母，不区分大小写
 3. 条件可以重复
-4. 错误的格式可能会被忽略，也可能导致异常，请避免
+4. 错误的格式可能导致异常，请避免
+5. 英文字符
 
 四、常用物质组合（直接复制并按格式使用）
 红色固体：[Cu,Fe2O3]
@@ -1029,16 +1137,14 @@ function input(s){
 用于灭火：[H2O,CO2,Na2CO3]
 建筑材料：[CaO,CaCO3,Ca(OH)2]
 胃酸过多：[Al(OH)3,Na2CO3,NaHCO3,Mg(OH)2]
-干燥剂：[H2SO4,CaO,NaOH,CaCl2,P2O5]
+干燥剂：[H2SO4,CaO,NaOH,CaCl2,P2O5,Fe]
 
 五、示例
-"A能生成B"
-ab(或a>b)
-"A与B能相互转换"
-a=b
-"A能与B反应，B能与C反应"
-a-b-c
-"已知A是单质，F是红色固体，BDE是氧化物，E能使澄清石灰水浑浊"
+"A与B生成C"
+a+b=c
+"A与B能反应，C与D能反应，A与C能互相转换"
+b-a=c-d
+"已知A是单质，F是红色固体，BDE是氧化物，气体E能使澄清石灰水浑浊"
 [a](1)
 f:[Fe2O3,Cu]
 [bde](O)
@@ -1049,9 +1155,6 @@ e:CO2
     ]
     function next() {
         return new Promise(resolve => submit.addEventListener('click', resolve, {once: true}))
-    }
-    function delSpace(s) {
-        return Array.from(s).filter(v => !'\n \t'.includes(v)).join('')
     }
     async function main() {
         try {
