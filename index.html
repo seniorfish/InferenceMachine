@@ -878,7 +878,7 @@ function input(s){
         return 0
     }
     // 指定物质
-    if(result = s.match(/^[a-zA-Z]:(?:([A-Z]\w*)|\[([A-Z]\w*(?:,[A-Z]\w*)*)\])$/)){
+    if(result = s.match(/^[a-zA-Z]:(?:([A-Z][\w()]*)|\[([A-Z][\w()]*(?:,[A-Z][\w()]*)*)\])$/)){
         if(result[1])
             limit_possible(s[0].toUpperCase(), new Set([result[1]]))
         else
