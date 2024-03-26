@@ -52,7 +52,7 @@ limitations under the License.
  *  继续递归的条件为当前假设合理，字母X的假设答案从board[X].possible中枚举
  */
 
-const VERSION = '2024.3.23'
+const VERSION = '2024.3.26'
 console.log('推断机 <VERSION> ', VERSION)
 
 /**
@@ -307,7 +307,7 @@ function gcd(a, b){
 }
 
 function isInvalid(cat, ani){
-    return Boolean(invalid[ani]?.has(cat))
+    return Boolean(invalid[ani] && invalid[ani].has(cat))
 }
 function unstable(form){
     if(form === 'H2CO3')
@@ -328,7 +328,7 @@ function solubility(cat, ani){
         throw new Error(`${cat}, ${ani}`)
     if(ani === 'O')
         return false
-    return !blacklist[ani]?.has(cat)
+    return !(blacklist[ani] && blacklist[ani].has(cat))
 }
 
 function putUp(ion, num){
@@ -342,7 +342,7 @@ function putUp(ion, num){
 }
 
 function link(cat, ani){
-    if(invalid[ani]?.has(cat))
+    if(invalid[ani] && invalid[ani].has(cat))
         return null
     let coe = gcd(cations[cat], anions[ani])
     return putUp(cat, anions[ani]/coe) + putUp(ani, cations[cat]/coe)
