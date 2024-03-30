@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>推断机</title>
+  <title>推断机 - 化学推断题自动求解工具</title>
+  <meta name=”description” content=”在线自动求解初中化学推断题，推断题解题器。支持转换式、元素限制、元素种类限制等多种条件。在输入框内按格式输入题目条件后，即可求出所有可能解。”/>
   <link rel="shortcut icon" href="https://img.icons8.com/?size=25&id=42953&format=png" crossorigin="anonymous">
 <script>
 /*
@@ -75,10 +76,12 @@ console.log('推断机 <VERSION> ', VERSION)
  * 2024.3.16
  * 修复转换式条件限制的bug。
  * 原因是else配错if，导致右侧转换式检查时有遗漏。
- * 2.24.3.23
+ * 2024.3.23
  * 上版本管理
  * 添加自动打表的代码，减少文件体积
  * 优化输入，简便
+ * 2024.3.30
+ * 修bug。添加简单的页脚。
  */
 
 /** 第零部分：建立转换式资料
@@ -1045,7 +1048,25 @@ function _input(s){
         text-align: center;
         padding-top: 16px;
     }
-	
+	footer{
+        font-size: 15px;
+        margin-right: 70px;
+        margin-top: 25px;
+        color: rgb(80, 80, 80);
+        text-align: center;
+        text-decoration: none;
+    }
+    a{
+        text-decoration: none;
+        color: rgb(80, 80, 80);
+    }
+    #foo{
+        background-color: white;
+        padding: 5px 10px;
+    }
+    #tdj{
+        color: rgb(27, 103, 255);
+    }
 </style>
 </head>
 
@@ -1053,13 +1074,20 @@ function _input(s){
 
 <div id="container">
     <div>
-        <textarea class="inputarea area" cols="30" rows="25" spellcheck="false"></textarea>
-        <textarea class="outputarea area" cols="80" rows="25" readonly spellcheck="false">
+        <textarea class="inputarea area" cols="30" rows="25" spellcheck="false" wrap="off"></textarea>
+        <textarea class="outputarea area" cols="80" rows="25" readonly spellcheck="false" wrap="off">
         该浏览器不支持ES2017语法, 请使用2018年以后的发布的主流浏览器打开
         </textarea>
     </div>
     <div><button id="submit" class="btn btn1">下一步</button></div>
 </div>
+<footer>
+    <span id="foo">
+        <a href="https://github.com/seniorfish/InferenceMachine">代码仓库</a> |
+        <a href="https://tdj.pages.dev/"><span id="tdj">推断机</span></a> |
+        使用教程
+    <span>
+</footer>
 
 <script>
     const inp = document.querySelector('.inputarea')
@@ -1072,7 +1100,6 @@ function _input(s){
 
 界面有点简陋，见谅
 本来是练习JS的随笔，没想到写了这么多
-需要2018年以后发布的主流浏览器运行
 代码开源(许可证见源码开头)
 左侧为输入框。
 
@@ -1084,6 +1111,7 @@ function _input(s){
         `\
 左侧所示为物质转换表，程序会依据该表解题
 你可以按需修改它
+
 注意：
 无需配平，英文字符，格式应与给出的条目相同，
 避免空格，一行一个，可以重复，没有顺序
@@ -1095,17 +1123,17 @@ function _input(s){
         `\
 请在左侧输入题目条件，一行一条
 
-规则如下：
+该工具无法理解自然语言，输入的格式要求如下：
 
 一、建立转换关系(先写)
 1. 转换链
-将不定数量的未知字母，用"><-="四种符号连接，可以得到转换链
-"a>b"代表A可以转换为B; "a<b"反之
-"a-b"代表A与B可以发生反应
-"a=b"代表A与B可以互相转换
-转换链支持不定长度、混合符号，例："c>d-f-a<g=i"
+  将未知字母，用"><-="四种符号连接，就是转换链。长度不限。
+  "a>b"代表A可以转换为B; "a<b"反之
+  "a-b"代表A与B可以发生反应
+  "a=b"代表A与B可以互相转换
+  转换链支持不定长度、混合符号，例："c>d-f-a<g=i"
 2. 转换式
-a+b=c+d+e(类似格式) A与B反应生成C,D和E(可以省略部分生成物!)
+  a+b=c+d+e(类似格式) A与B反应生成C,D和E(可以省略部分生成物!)
 
 二、添加物质条件
 0. [abc...](1)        ABC...每个都由1种元素组成(数量可自定义)
@@ -1142,8 +1170,8 @@ a+b=c+d+e(类似格式) A与B反应生成C,D和E(可以省略部分生成物!)
 五、示例
 "A与B生成C"
 a+b=c
-"A与B能反应，C与D能反应，A与C能互相转换"
-b-a=c-d
+"A与B能反应，C与D能反应，A能转换为C"
+b-a>c-d
 "已知A是单质，F是红色固体，BDE是氧化物，气体E能使澄清石灰水浑浊"
 [a](1)
 f:[Fe2O3,Cu]
