@@ -731,6 +731,7 @@ function boardLimit(){
 第五部分：深搜回溯求解
 */
 function solve(){
+    boardLimit()
     const ans = []
     cnt1 = 0, cnt2 = 0
     function dfs(known, unknown, used){
@@ -830,7 +831,7 @@ function solve(){
     // 改变第二项参数的顺序是否会影响性能？
     dfs({}, Array.from(board.keys()), new Set)
     console.log(cnt1, cnt2)
-    return ans
+    return {ans, cnt1, cnt2, cnt3}
 }
 
 /**
@@ -903,3 +904,5 @@ function input(s){
     }
     return 1;
 }
+
+export {INVENTORY, init, solve, input, board}

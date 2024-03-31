@@ -5,7 +5,6 @@
   <title>推断机 - 化学推断题自动求解工具</title>
   <meta name=”description” content=”在线自动求解初中化学推断题，推断题解题器。支持转换式、元素限制、元素种类限制等多种条件。在输入框内按格式输入题目条件后，即可求出所有可能解。”/>
   <link rel="shortcut icon" href="https://img.icons8.com/?size=25&id=42953&format=png" crossorigin="anonymous">
-  <script src="infer.js"></script>
 <style>
     .area{
         font-family: 'Courier New', Courier, monospace;
@@ -118,6 +117,10 @@
         <a href="https://zhuanlan.zhihu.com/p/689924810">使用教程</a>
     <span>
 </footer>
-<script src="index.js"></script>
+<script type="module">
+    import { INVENTORY, init, solve, input, board } from './infer.js'
+    import main from './index.js'
+    main(INVENTORY, init, solve, input, board)
+</script>
 </body>
 </html>

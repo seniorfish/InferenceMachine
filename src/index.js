@@ -92,10 +92,15 @@ e:CO2
 输入条件，点击“求解”
 `
 ]
+
+
+function delSpace(s){
+    return s.replace(/\s/g, '')
+}
 function next() {
     return new Promise(resolve => submit.addEventListener('click', resolve, {once: true}))
 }
-async function main() {
+async function main(INVENTORY, init, solve, input, board) {
     try {
         inp.value = ''
         output.value = outputs[0]
@@ -109,7 +114,7 @@ async function main() {
             if(i !== '')
                 INVENTORY.push(delSpace(i))     // 其实不用避免空格(偷笑)
         }
-        init()
+        init(INVENTORY)
         inp.value = ''
         let missed = 0
         while(1) {
@@ -123,8 +128,7 @@ async function main() {
                     missed += input(delSpace(i)) ? 1 : 0
             }
             let time1 = performance.now()
-            boardLimit()
-            let ans = solve()
+            let {ans, cnt1, cnt2, cnt3} = solve()
             // 输出缓冲区
             let o = [
                 `广度优化次数${cnt3}，搜索次数${cnt2}，试解次数${cnt1}，用时${Math.round(performance.now()-time1)/1000}s`,
@@ -176,4 +180,5 @@ async function main() {
         output.value = `啊这，出了点问题：\n${e}\n请重新加载`
     }
 }
-main()
+
+export default main

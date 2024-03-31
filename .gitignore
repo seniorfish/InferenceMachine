@@ -1,2 +1,4 @@
 .vscode
 TestCase.txt
+node_modules
+dist
