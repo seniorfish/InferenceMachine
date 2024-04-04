@@ -1,5 +1,6 @@
 {
   "dependencies": {
     "vite": "^5.2.7"
-  }
+  },
+  "type": "module"
 }

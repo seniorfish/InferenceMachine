@@ -1,4 +1,6 @@
-const VERSION = '2024.3.26'
+import { Solver, makeConversionList } from "./infer.js"
+
+const VERSION = '2024.4.4'
 console.log('推断机 <VERSION> ', VERSION)
 
 const inp = document.querySelector('.inputarea')
@@ -100,35 +102,35 @@ function delSpace(s){
 function next() {
     return new Promise(resolve => submit.addEventListener('click', resolve, {once: true}))
 }
-async function main(INVENTORY, init, solve, input, board) {
+async function main() {
     try {
+        // 第一页
         inp.value = ''
         output.value = outputs[0]
         submit.innerHTML = '下一步'
         await next()
-        inp.value = INVENTORY.join('\n')
+        // 转换式设定页
+        inp.value = makeConversionList().join('\n')
         output.value = outputs[1]
         await next()
-        INVENTORY.length = 0
-        for(let i of inp.value.split('\n')) {
-            if(i !== '')
-                INVENTORY.push(delSpace(i))     // 其实不用避免空格(偷笑)
-        }
-        init(INVENTORY)
+        // 条件输入页
+        const solver = new Solver(inp.value.split('\n'))
         inp.value = ''
-        let missed = 0
         while(1) {
-            missed = 0
+            solver.reset()
             output.value = outputs[2]
             submit.innerHTML = "求解！"
             inp.focus()
             await next()
+            // 结果页
+            let missed = 0
             for(let i of inp.value.split('\n')) {
                 if(i !== '')
-                    missed += input(delSpace(i)) ? 1 : 0
+                    missed += solver.input(delSpace(i))
             }
             let time1 = performance.now()
-            let {ans, cnt1, cnt2, cnt3} = solve()
+            let ans = solver.solve()
+            let [cnt1, cnt2, cnt3] = [solver.cnt1, solver.cnt2, solver.cnt3]
             // 输出缓冲区
             let o = [
                 `广度优化次数${cnt3}，搜索次数${cnt2}，试解次数${cnt1}，用时${Math.round(performance.now()-time1)/1000}s`,
@@ -174,7 +176,6 @@ async function main(INVENTORY, init, solve, input, board) {
             output.value = o.join('\n')
             submit.innerHTML = "上一步"
             await next()
-            board.clear()
         }
     } catch(e) {
         output.value = `啊这，出了点问题：\n${e}\n请重新加载`
