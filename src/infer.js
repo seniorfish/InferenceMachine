@@ -139,6 +139,7 @@ function makeConversionList(){
         "NaOH+SO3=Na2SO4+H2O",
         "Ba(OH)2+SO3=BaSO4+H2O",
         "Ca(OH)2+SO3=CaSO4+H2O",
+        "SO2+O2=SO3",
     ]
     // 自动生成溶液置换的程序片段
     /*
@@ -406,10 +407,10 @@ function keep(a, b){
         if(!b.has(i))
             a.delete(i)
 }
-function add(a, b){
-    for(let i of b)
-        a.add(i)
-}
+// function add(a, b){
+//     for(let i of b)
+//         a.add(i)
+// }
 function isSameSet(a,b){
     // a须是Set, b是可迭代对象
     let tmp = new Set(b)

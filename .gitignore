@@ -2,3 +2,5 @@
 TestCase.txt
 node_modules
 dist
+toString.js
+coverage

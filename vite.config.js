@@ -1,8 +1,11 @@
 /** @type {import('vite').UserConfig} */
 export default {
     build : {
-        outDir : '../dist',
-        emptyOutDir: true,
+        outDir : 'dist',
+        // emptyOutDir: true,
     },
-    root : './src'
+    root : '.',
+    test : {
+        // coverage:
+    }
 }
